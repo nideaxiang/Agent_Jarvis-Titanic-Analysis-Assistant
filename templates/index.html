@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>J.A.R.V.I.S. Interface</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-cyan: #00d4ff;
+            --secondary-blue: #0099cc;
+            --accent-orange: #ff6b35;
+            --bg-dark: #0a0e17;
+            --bg-panel: rgba(10, 20, 35, 0.85);
+            --grid-line: rgba(0, 212, 255, 0.1);
+            --glow-cyan: 0 0 20px rgba(0, 212, 255, 0.5);
+            --glow-orange: 0 0 20px rgba(255, 107, 53, 0.4);
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            color: #e0f7ff;
+        }
+
+        /* 全息网格背景 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 扫描线效果 */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                transparent 50%,
+                rgba(0, 212, 255, 0.03) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 1;
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(10px); }
+        }
+
+        /* 顶部状态栏 */
+        .status-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+            border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-left, .status-right {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-orange);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-orange);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* 主容器 */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            padding: 80px 20px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 250px 1fr 250px;
+            gap: 30px;
+            min-height: 100vh;
+        }
+
+        /* 侧边面板 */
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel-box {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 4px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-cyan), transparent);
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            color: var(--primary-cyan);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-title::before {
+            content: '◆';
+            color: var(--accent-orange);
+            font-size: 10px;
+        }
+
+        /* 系统状态环 */
+        .system-ring {
+            width: 150px;
+            height: 150px;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .ring-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .ring-bg {
+            fill: none;
+            stroke: rgba(0, 212, 255, 0.1);
+            stroke-width: 8;
+        }
+
+        .ring-progress {
+            fill: none;
+            stroke: var(--primary-cyan);
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 440;
+            stroke-dashoffset: 110;
+            filter: drop-shadow(0 0 5px var(--primary-cyan));
+            animation: ringRotate 4s linear infinite;
+        }
+
+        @keyframes ringRotate {
+            0% { stroke-dashoffset: 440; }
+            100% { stroke-dashoffset: 0; }
+        }
+
+        .ring-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .ring-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-cyan);
+        }
+
+        .ring-label {
+            font-size: 12px;
+            color: rgba(224, 247, 255, 0.6);
+            text-transform: uppercase;
+        }
+
+        /* 数据流 */
+        .data-stream {
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            color: rgba(0, 212, 255, 0.6);
+            line-height: 1.8;
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .data-stream::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: linear-gradient(transparent, var(--bg-panel));
+        }
+
+        /* 中央聊天区域 */
+        .center-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 贾维斯核心视觉 */
+        .jarvis-core {
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .core-container {
+            position: relative;
+            width: 180px;
+            height: 180px;
+        }
+
+        .core-circle {
+            position: absolute;
+            border: 2px solid var(--primary-cyan);
+            border-radius: 50%;
+            box-shadow: var(--glow-cyan), inset 0 0 20px rgba(0, 212, 255, 0.1);
+        }
+
+        .core-1 {
+            width: 100%;
+            height: 100%;
+            animation: rotate 20s linear infinite;
+            border-style: dashed;
+        }
+
+        .core-2 {
+            width: 70%;
+            height: 70%;
+            top: 15%;
+            left: 15%;
+            animation: rotate 15s linear infinite reverse;
+            border-color: var(--secondary-blue);
+        }
+
+        .core-3 {
+            width: 40%;
+            height: 40%;
+            top: 30%;
+            left: 30%;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.3), transparent);
+            animation: pulse-core 3s ease-in-out infinite;
+        }
+
+        .core-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-cyan);
+            text-shadow: 0 0 20px var(--primary-cyan);
+            letter-spacing: 4px;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse-core {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+        }
+
+        /* 语音波形 */
+        .voice-wave {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+            align-items: flex-end;
+            height: 40px;
+        }
+
+        .wave-bar {
+            width: 4px;
+            background: linear-gradient(to top, var(--primary-cyan), transparent);
+            border-radius: 2px;
+            animation: wave 1.2s ease-in-out infinite;
+        }
+
+        .wave-bar:nth-child(1) { height: 20%; animation-delay: 0s; }
+        .wave-bar:nth-child(2) { height: 60%; animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { height: 40%; animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { height: 80%; animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { height: 50%; animation-delay: 0.4s; }
+        .wave-bar:nth-child(6) { height: 70%; animation-delay: 0.5s; }
+        .wave-bar:nth-child(7) { height: 30%; animation-delay: 0.6s; }
+
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
+            50% { transform: scaleY(1); opacity: 1; }
+        }
+
+        /* 聊天容器 */
+        .chat-container {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-cyan), transparent);
+            box-shadow: 0 0 10px var(--primary-cyan);
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            color: var(--primary-cyan);
+            letter-spacing: 2px;
+        }
+
+        .chat-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: #00ff88;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #00ff88;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-box::-webkit-scrollbar-track {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .chat-box::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 15px 20px;
+            position: relative;
+            font-size: 15px;
+            line-height: 1.6;
+            animation: messageSlide 0.3s ease-out;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background: linear-gradient(135deg, rgba(0, 153, 204, 0.2), rgba(0, 212, 255, 0.1));
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 4px 4px 0 4px;
+            color: #e0f7ff;
+        }
+
+        .user-message::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 20px;
+            height: 20px;
+            border-right: 2px solid var(--primary-cyan);
+            border-bottom: 2px solid var(--primary-cyan);
+        }
+
+        .ai-message {
+            align-self: flex-start;
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 107, 53, 0.05));
+            border: 1px solid rgba(255, 107, 53, 0.3);
+            border-radius: 4px 4px 4px 0;
+            color: #ffe4d6;
+        }
+
+        .ai-message::before {
+            content: 'J.A.R.V.I.S.';
+            position: absolute;
+            top: -20px;
+            left: 0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            color: var(--accent-orange);
+            letter-spacing: 2px;
+        }
+
+        .message-time {
+            font-size: 10px;
+            color: rgba(224, 247, 255, 0.4);
+            margin-top: 8px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .input-container {
+            padding: 20px;
+            border-top: 1px solid rgba(0, 212, 255, 0.2);
+            display: flex;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        #message-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 2px;
+            padding: 12px 20px;
+            color: var(--primary-cyan);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        #message-input:focus {
+            border-color: var(--primary-cyan);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+
+        #message-input::placeholder {
+            color: rgba(0, 212, 255, 0.4);
+        }
+
+        .send-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 153, 204, 0.3));
+            border: 1px solid var(--primary-cyan);
+            color: var(--primary-cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .send-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.4), rgba(0, 153, 204, 0.5));
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+            text-shadow: 0 0 10px var(--primary-cyan);
+        }
+
+        .send-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .send-btn:hover::before {
+            left: 100%;
+        }
+
+        /* 邮件确认面板 */
+        .email-confirm {
+            display: none;
+            margin: 0 20px 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 107, 53, 0.05));
+            border: 1px solid var(--accent-orange);
+            border-radius: 4px;
+            position: relative;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .email-confirm::before {
+            content: 'MISSION CONFIRMATION REQUIRED';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: var(--bg-dark);
+            padding: 0 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            color: var(--accent-orange);
+            letter-spacing: 2px;
+        }
+
+        .email-content {
+            margin-bottom: 15px;
+        }
+
+        .email-row {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .email-label {
+            width: 80px;
+            color: var(--accent-orange);
+            font-weight: 500;
+        }
+
+        .email-value {
+            flex: 1;
+            color: #e0f7ff;
+            font-family: 'Rajdhani', monospace;
+        }
+
+        .email-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .btn-confirm, .btn-cancel {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+        }
+
+        .btn-confirm {
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+        }
+
+        .btn-confirm:hover {
+            background: rgba(0, 255, 136, 0.4);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+        }
+
+        .btn-cancel {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid #ff4444;
+            color: #ff4444;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 0, 0, 0.4);
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+        }
+
+        .plot-image {
+            max-width: 100%;
+            margin-top: 10px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 4px;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                max-width: 800px;
+            }
+            .side-panel {
+                display: none;
+            }
+        }
+
+        /* 角落装饰 */
+        .corner {
+            position: fixed;
+            width: 100px;
+            height: 100px;
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            z-index: 5;
+        }
+
+        .corner-tl { top: 40px; left: 0; border-right: none; border-bottom: none; }
+        .corner-tr { top: 40px; right: 0; border-left: none; border-bottom: none; }
+        .corner-bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+        .corner-br { bottom: 0; right: 0; border-left: none; border-top: none; }
+
+        /* 加载动画 */
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 15px 20px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-cyan);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 状态栏 -->
+    <div class="status-bar">
+        <div class="status-left">
+            <div class="status-item">
+                <span class="status-indicator"></span>
+                <span>System Online</span>
+            </div>
+            <div class="status-item">
+                <span>STARK INDUSTRIES</span>
+            </div>
+        </div>
+        <div class="status-right">
+            <div class="status-item" id="clock">00:00:00</div>
+            <div class="status-item">J.A.R.V.I.S. v2.0</div>
+        </div>
+    </div>
+
+    <!-- 角落装饰 -->
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="main-container">
+        <!-- 左侧面板 -->
+        <div class="side-panel">
+            <div class="panel-box">
+                <div class="panel-title">System Core</div>
+                <div class="system-ring">
+                    <svg class="ring-svg" viewBox="0 0 150 150">
+                        <circle class="ring-bg" cx="75" cy="75" r="70"/>
+                        <circle class="ring-progress" cx="75" cy="75" r="70"/>
+                    </svg>
+                    <div class="ring-center">
+                        <div class="ring-value">98%</div>
+                        <div class="ring-label">Efficiency</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-box">
+                <div class="panel-title">Data Stream</div>
+                <div class="data-stream" id="data-stream">
+                    > Initializing neural network...<br>
+                    > Loading personality matrix...<br>
+                    > Calibrating voice synthesis...<br>
+                    > Systems nominal...<br>
+                    > Awaiting input...
+                </div>
+            </div>
+
+            <div class="panel-box">
+                <div class="panel-title">Modules</div>
+                <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px; color: rgba(224,247,255,0.7);">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Neural Processor</span>
+                        <span style="color: #00ff88;">Active</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Email Protocol</span>
+                        <span style="color: #00ff88;">Standby</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Visual Analysis</span>
+                        <span style="color: #00ff88;">Online</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Security</span>
+                        <span style="color: #ff6b35;">Locked</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 中央区域 -->
+        <div class="center-area">
+            <!-- 贾维斯核心 -->
+            <div class="jarvis-core">
+                <div class="core-container">
+                    <div class="core-circle core-1"></div>
+                    <div class="core-circle core-2"></div>
+                    <div class="core-circle core-3"></div>
+                    <div class="core-center">J.A.R.V.I.S.</div>
+                </div>
+                <div class="voice-wave">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+            </div>
+
+            <!-- 聊天容器 -->
+            <div class="chat-container">
+                <div class="chat-header">
+                    <span>Communication Interface</span>
+                    <div class="chat-status">
+                        <span class="status-dot"></span>
+                        <span>ONLINE</span>
+                    </div>
+                </div>
+                
+                <div class="chat-box" id="chat-box"></div>
+
+                <div class="email-confirm" id="email-confirm">
+                    <div class="email-content" id="email-content"></div>
+                    <div class="email-actions">
+                        <button class="btn-confirm" onclick="confirmEmail(true)">Execute</button>
+                        <button class="btn-cancel" onclick="confirmEmail(false)">Abort</button>
+                    </div>
+                </div>
+
+                <div class="input-container">
+                    <input type="text" id="message-input" placeholder="Awaiting your command, sir..." />
+                    <button class="send-btn" onclick="sendMessage()">Transmit</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧面板 -->
+        <div class="side-panel">
+            <div class="panel-box">
+                <div class="panel-title">Network Status</div>
+                <div style="height: 100px; display: flex; align-items: flex-end; justify-content: space-between; gap: 5px; padding: 10px 0;">
+                    <div style="width: 100%; background: linear-gradient(to top, var(--primary-cyan), transparent); height: 60%; animation: networkPulse 2s infinite;"></div>
+                    <div style="width: 100%; background: linear-gradient(to top, var(--primary-cyan), transparent); height: 80%; animation: networkPulse 2s infinite 0.2s;"></div>
+                    <div style="width: 100%; background: linear-gradient(to top, var(--primary-cyan), transparent); height: 40%; animation: networkPulse 2s infinite 0.4s;"></div>
+                    <div style="width: 100%; background: linear-gradient(to top, var(--primary-cyan), transparent); height: 90%; animation: networkPulse 2s infinite 0.6s;"></div>
+                    <div style="width: 100%; background: linear-gradient(to top, var(--primary-cyan), transparent); height: 70%; animation: networkPulse 2s infinite 0.8s;"></div>
+                </div>
+                <style>
+                    @keyframes networkPulse {
+                        0%, 100% { opacity: 0.6; }
+                        50% { opacity: 1; }
+                    }
+                </style>
+            </div>
+
+            <div class="panel-box">
+                <div class="panel-title">Recent Activity</div>
+                <div style="font-size: 12px; color: rgba(224,247,255,0.6); line-height: 2;">
+                    <div>• System initialized</div>
+                    <div>• Voice module loaded</div>
+                    <div>• Database connected</div>
+                    <div>• Security handshake OK</div>
+                    <div>• Ready for commands</div>
+                </div>
+            </div>
+
+            <div class="panel-box">
+                <div class="panel-title">Directives</div>
+                <div style="font-size: 13px; color: var(--primary-cyan); line-height: 1.8;">
+                    "I have indeed been uploaded, sir. We're online and ready."
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentEmailData = null;
+
+        // 时钟更新
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour12: false });
+            document.getElementById('clock').textContent = timeString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // 数据流动画
+        const dataStream = document.getElementById('data-stream');
+        const messages = [
+            '> Processing neural pathways...',
+            '> Optimizing algorithms...',
+            '> Scanning for updates...',
+            '> Monitoring system health...',
+            '> Analyzing user patterns...',
+            '> Synchronizing databases...',
+            '> Calibrating sensors...',
+            '> Maintaining peak efficiency...'
+        ];
+        
+        let msgIndex = 0;
+        setInterval(() => {
+            const line = document.createElement('div');
+            line.textContent = messages[msgIndex % messages.length];
+            line.style.opacity = '0';
+            line.style.animation = 'fadeIn 0.5s forwards';
+            dataStream.appendChild(line);
+            if (dataStream.children.length > 8) {
+                dataStream.removeChild(dataStream.firstChild);
+            }
+            msgIndex++;
+        }, 2000);
+
+        function addMessage(content, isUser) {
+            const chatBox = document.getElementById("chat-box");
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `message ${isUser ? "user-message" : "ai-message"}`;
+            
+            const textDiv = document.createElement("div");
+            textDiv.textContent = content;
+            messageDiv.appendChild(textDiv);
+            
+            const timeDiv = document.createElement("div");
+            timeDiv.className = "message-time";
+            timeDiv.textContent = new Date().toLocaleTimeString();
+            messageDiv.appendChild(timeDiv);
+            
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function addImage(base64Image) {
+            const chatBox = document.getElementById("chat-box");
+            const img = document.createElement("img");
+            img.src = `data:image/png;base64,${base64Image}`;
+            img.className = "plot-image";
+            chatBox.appendChild(img);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function showEmailConfirm(emailData) {
+            currentEmailData = emailData;
+            const emailConfirm = document.getElementById("email-confirm");
+            const emailContent = document.getElementById("email-content");
+            emailContent.innerHTML = `
+                <div class="email-row">
+                    <span class="email-label">FROM:</span>
+                    <span class="email-value">${emailData.FromEmail}</span>
+                </div>
+                <div class="email-row">
+                    <span class="email-label">TO:</span>
+                    <span class="email-value">${emailData.Recipients}</span>
+                </div>
+                <div class="email-row">
+                    <span class="email-label">SUBJECT:</span>
+                    <span class="email-value">${emailData.Subject}</span>
+                </div>
+                <div class="email-row">
+                    <span class="email-label">CONTENT:</span>
+                    <span class="email-value">${emailData.Body}</span>
+                </div>
+            `;
+            emailConfirm.style.display = "block";
+        }
+
+        async function confirmEmail(confirmed) {
+            const emailConfirm = document.getElementById("email-confirm");
+            emailConfirm.style.display = "none";
+
+            if (confirmed) {
+                try {
+                    const response = await fetch("/send_email", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(currentEmailData),
+                    });
+                    const data = await response.json();
+                    addMessage(data.response, false);
+                } catch (error) {
+                    addMessage("Transmission failed: " + error, false);
+                }
+            } else {
+                addMessage("Mission aborted. Standing by for further instructions.", false);
+            }
+            currentEmailData = null;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById("message-input");
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            addMessage(message, true);
+            input.value = "";
+
+            // 显示输入指示器
+            const chatBox = document.getElementById("chat-box");
+            const typingDiv = document.createElement("div");
+            typingDiv.className = "typing-indicator";
+            typingDiv.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+            chatBox.appendChild(typingDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ message }),
+                });
+
+                const data = await response.json();
+                
+                // 移除输入指示器
+                chatBox.removeChild(typingDiv);
+
+                if (data.end_conversation) {
+                    addMessage(data.response, false);
+                    input.disabled = true;
+                    return;
+                }
+
+                addMessage(data.response, false);
+
+                if (data.action === "confirm_email") {
+                    showEmailConfirm(data.email_data);
+                }
+
+                if (data.image) {
+                    addImage(data.image);
+                }
+            } catch (error) {
+                chatBox.removeChild(typingDiv);
+                addMessage("System error detected: " + error, false);
+            }
+        }
+
+        document.getElementById("message-input").addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        // 初始欢迎消息
+        setTimeout(() => {
+            addMessage("Welcome back, sir. J.A.R.V.I.S. at your service. All systems are operational.", false);
+        }, 1000);
+    </script>
+</body>
+</html>
